@@ -30,7 +30,7 @@ def proste_katy(contour):
 
     # Weryfikuje czy kontur ma proste katy
     a=80
-    b=100
+    b=110
     c=170
     k = abs( kat(contour[len(contour)-1][0],contour[0][0],contour[1][0]) )
     if k < a or (k > b and k < c):
@@ -53,7 +53,8 @@ def selekcja_kontorow(contours, min, max):
     a = len(contours)
     k = 0
     while (k < a):
-        if cv.contourArea( contours[k] ) < min or cv.contourArea( contours[k] ) > max or not proste_katy(contours[k]):
+        r = cv.minAreaRect(contours[k])[1]
+        if cv.contourArea( contours[k] ) < min or cv.contourArea( contours[k] ) > max or not proste_katy(contours[k]) or r[0]/r[1] > 6 or r[1]/r[0] > 6:
             del contours[k]
             a = len(contours)
             k = k - 1
@@ -62,8 +63,9 @@ def selekcja_kontorow(contours, min, max):
 
 
 def wyostrz(img):
+    # Wyostrza lub rozmazuje zdjecie
     blur = cv.GaussianBlur(img, (5,5), 3)
-    img = cv.addWeighted(img, 1.5, blur, 1, 0)
+    img = cv.addWeighted(img, 1.5, blur, -0.5, 0)
     return blur
 
 
@@ -144,7 +146,7 @@ def kontury_budynkow(img):
     return result
 
 
-img = cv.imread('test2.jpg')
+img = cv.imread('test6.jpg')
 contours = kontury_budynkow(img)
 
 contours = usun_duplikaty(contours)
