@@ -2,23 +2,29 @@ import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
-def srodek(contour):
+#   This alghoritm was created to detect buildings on a satelite picture by threshold and cv.findContours
+#   You can modify it to work properly with any picture by removing usun_zielone function
+#   It works pretty bad if object and background are in similiar colour
 
-    # Znajduje srodek konturu
+def srodek(contour):
+#   Finds the middle of the contour
+
     M = cv.moments(contour)
     cx = int(M['m10'] /M['m00'])
     cy = int(M['m01'] /M['m00'])
     return([cy,cy])
 
 def odl_xy(x, y):
+#   Finds the distance between x and y points
 
-    # Odleglosc miedzy punktami x, y
     dx = x[0] - y[0]
     dy = x[1] - y[1]
     D = np.math.sqrt(dx*dx+dy*dy)
     return D
 
 def kat(a, b, c):
+#   Returns angle in degrees between points a, b and c
+
     v0 = np.array(a) - np.array(b)
     v1 = np.array(c) - np.array(b)
 
@@ -27,8 +33,8 @@ def kat(a, b, c):
     
 
 def proste_katy(contour):
+#   Checks if contour has angles near 90 or 180 degrees
 
-    # Weryfikuje czy kontur ma proste katy
     a=80
     b=110
     c=170
@@ -48,8 +54,8 @@ def proste_katy(contour):
 
 
 def selekcja_kontorow(contours, min, max):
+#   Deletes contours not matching area or angle requirements
 
-    # Usuwa niepasujace kontury
     a = len(contours)
     k = 0
     while (k < a):
@@ -63,14 +69,15 @@ def selekcja_kontorow(contours, min, max):
 
 
 def wyostrz(img):
-    # Wyostrza lub rozmazuje zdjecie
+#   Sharpens or blurs the picture
+
     blur = cv.GaussianBlur(img, (5,5), 3)
     img = cv.addWeighted(img, 1.5, blur, -0.5, 0)
     return blur
 
 
 def usun_zielone(img):
-    # Usuwa zielone obszary (trawe)
+#   Removes green areas (grass)
 
     lower_green = np.array([30,30,10])
     upper_green = np.array([80,255,220])
@@ -90,7 +97,7 @@ def usun_zielone(img):
 
 
 def rysuj_kontury(img, contours):
-    # Rysuje kontury i ich rogi
+#   Draws contours and their corners
 
     cv.drawContours(img, contours, -1, (0,255,0), 2)
 
@@ -101,7 +108,7 @@ def rysuj_kontury(img, contours):
     return img
 
 def usun_duplikaty(contours):
-    # Usuwa kontury wykryte kilkakrotnie
+#   Deletes contours detected several times
 
     a = len(contours)
     i = 0
@@ -119,15 +126,19 @@ def usun_duplikaty(contours):
     return contours
 
 def kontury_budynkow(img):
+    
+#   Returns an array of contours detected on the img file
     result = []
     img = usun_zielone(img)
     imgSplit = cv.split(img)
 
+#   Contour search process is executed separately for R, G and B channels and for different threshold options
     for y in range(0,2):
         for b in range(11, 511, 50):
             for g in range(-20,-6,2):
                 imgray = wyostrz(imgSplit[y])
-                # Aplikuje gray, threshold, morph i wykrywa kontury
+
+                # Applies threshold, morph and detects contours
                 thresh  = cv.adaptiveThreshold(imgray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,  b, g)
                 kernel  = np.ones((3,3),np.uint8)
                 morph = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
@@ -145,12 +156,11 @@ def kontury_budynkow(img):
 
     return result
 
-
-img = cv.imread('test6.jpg')
+#   You can see how the program works by using included test.jpg files
+img = cv.imread('test2.jpg')
 contours = kontury_budynkow(img)
-
 contours = usun_duplikaty(contours)
-
 img = rysuj_kontury(img, contours)
+
 plt.imshow(img)
 plt.show()
